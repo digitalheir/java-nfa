@@ -1,11 +1,11 @@
 # Nondeterministic finite state automata
-This is a library that implement [nondeterminstic finite state atuomata](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton) (NFAs) in Java. You can think of NFAs as flowcharts: you are in a state, take some action, and arrive in a new state. The action can produce a side effect, such as writing a string to a tape. 
+This is a library that provides an implemention [nondeterminstic finite state automata](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton) (NFAs) in Java. You can think of NFAs as flowcharts: you are in a state, take some action, and arrive in a new state. The action can produce a side effect, such as writing a string to a tape. 
 
 ## Why?
-There are already a bunch of libraries out there which work with deterministic finite state automata, and there is a well-known result in automata theory which says that for any language recognized by an NFA, we can construct a DFA which recognizes the same language.
+There are already a bunch of libraries out there which work with deterministic finite state automata (DFAs), and there is a well-known result in automata theory which says that for any language recognized by an NFA, we can construct a DFA which recognizes the same language.
 
 There are two problems, however:
-* Determinizing an NFA has an exponential blowup in the number of states (|stated(DFA)| = O(|states(NFA)|²)
+* Determinizing an NFA has an exponential blowup in the number of states.
 * An NFA may have side-effects, which may be problematic with the standard way of determinizing NFAs. Indeed, [some non-deterministic finite state transducers have no equivalent deterministic finite state transducer](http://www.let.rug.nl/~vannoord/papers/preds/node22.html). 
 
 On a side note, [Allauzen & Mohri](http://www.cs.nyu.edu/~allauzen/pdf/twins.pdf) have described efficient algorithms for determining when a transducer is in fact determinizable, and this would be a nice feature to implement.
