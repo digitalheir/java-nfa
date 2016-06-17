@@ -1,0 +1,260 @@
+package org.leibnizcenter.nfa;
+
+import javafx.util.Pair;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+/**
+ * A collection of all possible paths of state transitions, starting from a given state and a given input token
+ * Created by maarten on 17-6-16.
+ */
+public class PossibleStateTransitionPaths implements Collection<Transition> {
+    public final List<Event> path;
+    public final Collection<Transition> possibleTransitions;
+    public final Map<State, PossibleStateTransitionPaths> furtherPaths;
+    public final int numberOfBranches;
+    public final int numberOfTransitions;
+    public final Event event;
+    public final State from;
+
+    /**
+     * This constructor has a complexity of O(possibleTransitions.size()) because it has to count the number of paths diverging
+     *
+     * @param possibleTransitions
+     * @param path
+     * @param furtherPaths
+     */
+    public PossibleStateTransitionPaths(State from, Collection<Transition> possibleTransitions, List<Event> path, Map<State, PossibleStateTransitionPaths> furtherPaths) {
+        this.path = path;
+        this.possibleTransitions = possibleTransitions;
+        this.furtherPaths = furtherPaths;
+        this.event = path.get(0);
+        this.from = from;
+
+        // TODO don't run the sanity checks because they add complexity
+        sanityChecks(possibleTransitions, path, furtherPaths);
+
+        int furthBranchNumber = 0;
+        int numberOfTransitions = possibleTransitions.size();
+        if (furtherPaths != null) for (Transition transition : possibleTransitions) {
+            furthBranchNumber += furtherPaths.get(transition.getTo()).numberOfBranches();
+            numberOfTransitions += furtherPaths.get(transition.getTo()).size();
+        }
+        else {
+            furthBranchNumber += possibleTransitions.size();
+        }
+        this.numberOfBranches = furthBranchNumber;
+        this.numberOfTransitions = numberOfTransitions;
+//        System.out.println(this.numberOfTransitions);
+    }
+
+    public int numberOfBranches() {
+        return numberOfBranches;
+    }
+
+    public void sanityChecks(Collection<Transition> possibleTransitions, List<Event> path, Map<State, PossibleStateTransitionPaths> furtherPaths) {
+        if (possibleTransitions.stream().map(Transition::getFrom).collect(Collectors.toSet()).size() != 1)
+            throw new Error();
+        if (possibleTransitions.stream().map(Transition::getEvent).collect(Collectors.toSet()).size() != 1)
+            throw new Error();
+        if (path.size() > 1) {
+            if (furtherPaths == null) throw new NullPointerException();
+        } else if (furtherPaths != null) throw new NullPointerException();
+
+        if (furtherPaths != null) {
+            possibleTransitions.stream().forEach(transition -> {
+                        final PossibleStateTransitionPaths possibleFurtherBranches = furtherPaths.get(transition.getTo());
+                        if (possibleFurtherBranches.path.size() != path.size() - 1) throw new Error();
+                        possibleFurtherBranches.possibleTransitions.stream().forEach(t -> {
+                                    if (!t.getFrom().equals(transition.getTo())) throw new Error();
+                                }
+                        );
+                    }
+            );
+        }
+
+        // possibleTransitions should be unique
+        assert possibleTransitions.stream().distinct().count() == possibleTransitions.size();
+    }
+
+    public int size() {
+        return numberOfTransitions;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return numberOfTransitions == 0;
+    }
+
+    /**
+     * Runs in O(n), for n is the length of the path
+     *
+     * @param o Possible input path. Must be instance of {@see Iterable}.
+     * @return Whether the given branch is contained in this one
+     */
+    @Override
+    public boolean contains(Object o) {
+        if (o instanceof Iterable) {
+            if (o instanceof Collection && ((Collection) o).size() != size())
+                return false;
+
+            Iterable iterable = ((Iterable) o);
+            Iterator itThat = iterable.iterator();
+            Iterator<Transition> itThis = iterator();
+            while (itThat.hasNext() && itThis.hasNext())
+                if (!itThis.next().equals(itThat.next()))
+                    return false;
+            return itThis.hasNext() == itThat.hasNext();
+        }
+        return false;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Transition> iterator() {
+        return StreamSupport.stream(spliterator(), false)
+                .iterator();
+    }
+
+    @NotNull
+    @Override
+    public Transition[] toArray() {
+        Transition[] arr = new Transition[numberOfTransitions];
+        Iterator<Transition> iterator = iterator();
+        for (int i = 0; i < numberOfTransitions; i++) arr[i] = iterator.next();
+        return arr;
+    }
+
+    @NotNull
+    @Override
+    public <T> T[] toArray(@NotNull T[] a) {
+        //if (!(Transition.class.isInstance(new Class<T>()))) throw new InvalidParameterException();
+        Iterator<Transition> iterator = iterator();
+        for (int i = 0; i < a.length; i++) {
+            //noinspection unchecked
+            a[i] = (T) iterator.next();
+            if (!iterator.hasNext()) break;
+        }
+        return a;
+    }
+
+    @Override
+    public boolean add(Transition transition) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean containsAll(@NotNull Collection<?> c) {
+        return c.stream()
+                .filter(this::contains)
+                .count() == c.size();
+    }
+
+    @Override
+    public boolean addAll(@NotNull Collection<? extends Transition> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(@NotNull Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(@NotNull Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Spliterator<Transition> spliterator() {
+        return new BranchesSpliterator(this);
+    }
+
+    private static class BranchesSpliterator implements Spliterator<Transition> {
+        private final LinkedList<Pair<PossibleStateTransitionPaths, Iterator<Transition>>> iteratorState;
+
+        public BranchesSpliterator(PossibleStateTransitionPaths transitionz) {
+            this.iteratorState = new LinkedList<>();
+            iteratorState.add(new Pair<>(transitionz, transitionz.possibleTransitions.iterator()));
+        }
+
+        public BranchesSpliterator(Pair<PossibleStateTransitionPaths, Iterator<Transition>> state) {
+            this.iteratorState = new LinkedList<>();
+            iteratorState.add(state);
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super Transition> action) {
+            synchronized (iteratorState) {
+                if (iteratorState.size() <= 0) return false;
+                final Iterator<Transition> iteratorToUse = iteratorState.peek().getValue();
+                Transition transition = iteratorToUse.next();
+
+                if (!iteratorToUse.hasNext()) {
+                    // Exhausted this iteratorState: go on to possible next states
+                    final PossibleStateTransitionPaths rip = iteratorState.pop().getKey();
+                    if (rip.furtherPaths != null) rip.furtherPaths.forEach((_state, branches) ->
+                            iteratorState.push(new Pair<>(branches, branches.possibleTransitions.iterator()))
+                    );
+                }
+                action.accept(transition);
+            }
+            return true;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super Transition> action) {
+            //noinspection StatementWithEmptyBody
+            while (tryAdvance(action)) {
+            }
+        }
+
+
+        @Override
+        public Spliterator<Transition> trySplit() { // O(1)
+            synchronized (iteratorState) {
+                if (iteratorState.size() > 1)
+                    return new BranchesSpliterator(iteratorState.removeLast());
+                else return null;
+            }
+        }
+
+        @Override
+        public long estimateSize() {
+            return iteratorState.stream()
+                    .map(Pair::getKey)
+                    .mapToInt(PossibleStateTransitionPaths::size)
+                    .sum();
+        }
+
+        @Override
+        public long getExactSizeIfKnown() {
+            return estimateSize();
+        }
+
+        @Override
+        public int characteristics() {
+            return SIZED | SUBSIZED
+                    | NONNULL
+                    | IMMUTABLE;
+            // |ORDERED
+            // |DISTINCT // NOTE: only if we include the state history...
+            // |SORTED
+            // |CONCURRENT
+        }
+    }
+}
