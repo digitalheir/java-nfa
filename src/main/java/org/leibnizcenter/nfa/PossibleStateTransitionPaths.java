@@ -6,33 +6,35 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
  * A collection of all possible paths of state transitions, starting from a given state and a given input token
  * Created by maarten on 17-6-16.
  */
-public class PossibleStateTransitionPaths implements Collection<Transition> {
-    public final List<Event> path;
-    public final Collection<Transition> possibleTransitions;
-    public final Map<State, PossibleStateTransitionPaths> furtherPaths;
+@SuppressWarnings("WeakerAccess")
+public class PossibleStateTransitionPaths<S extends State, E extends Event> implements Collection<Transition<S, E>> {
+    public final List<E> path;
+    public final Collection<Transition<S, E>> possibleTransitions;
+    public final Map<S, PossibleStateTransitionPaths<S, E>> furtherPaths;
     public final int numberOfBranches;
     public final int numberOfTransitions;
-    public final Event event;
-    public final State from;
+    public final E e;
+    public final S from;
 
     /**
      * This constructor has a complexity of O(possibleTransitions.size()) because it has to count the number of paths diverging
      *
-     * @param possibleTransitions
-     * @param path
-     * @param furtherPaths
+     * @param possibleTransitions Collection of possible transition from a fixed state through a fixed event
+     * @param path                Further string events, including the one that spawns possibleTransitions at the head
+     * @param furtherPaths        Further possible paths from result states of possibleTransitions along the events of the tail of path
      */
-    public PossibleStateTransitionPaths(State from, Collection<Transition> possibleTransitions, List<Event> path, Map<State, PossibleStateTransitionPaths> furtherPaths) {
+    public PossibleStateTransitionPaths(S from, Collection<Transition<S, E>> possibleTransitions, List<E> path, Map<S, PossibleStateTransitionPaths<S, E>> furtherPaths) {
         this.path = path;
         this.possibleTransitions = possibleTransitions;
         this.furtherPaths = furtherPaths;
-        this.event = path.get(0);
+        this.e = path.get(0);
         this.from = from;
 
         // TODO don't run the sanity checks because they add complexity
@@ -40,7 +42,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
 
         int furthBranchNumber = 0;
         int numberOfTransitions = possibleTransitions.size();
-        if (furtherPaths != null) for (Transition transition : possibleTransitions) {
+        if (furtherPaths != null) for (Transition<S, E> transition : possibleTransitions) {
             furthBranchNumber += furtherPaths.get(transition.getTo()).numberOfBranches();
             numberOfTransitions += furtherPaths.get(transition.getTo()).size();
         }
@@ -56,7 +58,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
         return numberOfBranches;
     }
 
-    public void sanityChecks(Collection<Transition> possibleTransitions, List<Event> path, Map<State, PossibleStateTransitionPaths> furtherPaths) {
+    public void sanityChecks(Collection<Transition<S, E>> possibleTransitions, List<E> path, Map<S, PossibleStateTransitionPaths<S, E>> furtherPaths) {
         if (possibleTransitions.stream().map(Transition::getFrom).collect(Collectors.toSet()).size() != 1)
             throw new Error();
         if (possibleTransitions.stream().map(Transition::getEvent).collect(Collectors.toSet()).size() != 1)
@@ -67,7 +69,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
 
         if (furtherPaths != null) {
             possibleTransitions.stream().forEach(transition -> {
-                        final PossibleStateTransitionPaths possibleFurtherBranches = furtherPaths.get(transition.getTo());
+                final PossibleStateTransitionPaths<S, E> possibleFurtherBranches = furtherPaths.get(transition.getTo());
                         if (possibleFurtherBranches.path.size() != path.size() - 1) throw new Error();
                         possibleFurtherBranches.possibleTransitions.stream().forEach(t -> {
                                     if (!t.getFrom().equals(transition.getTo())) throw new Error();
@@ -104,7 +106,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
 
             Iterable iterable = ((Iterable) o);
             Iterator itThat = iterable.iterator();
-            Iterator<Transition> itThis = iterator();
+            Iterator<Transition<S, E>> itThis = iterator();
             while (itThat.hasNext() && itThis.hasNext())
                 if (!itThis.next().equals(itThat.next()))
                     return false;
@@ -115,7 +117,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
 
     @NotNull
     @Override
-    public Iterator<Transition> iterator() {
+    public Iterator<Transition<S, E>> iterator() {
         return StreamSupport.stream(spliterator(), false)
                 .iterator();
     }
@@ -124,7 +126,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
     @Override
     public Transition[] toArray() {
         Transition[] arr = new Transition[numberOfTransitions];
-        Iterator<Transition> iterator = iterator();
+        Iterator<Transition<S, E>> iterator = iterator();
         for (int i = 0; i < numberOfTransitions; i++) arr[i] = iterator.next();
         return arr;
     }
@@ -133,7 +135,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
     @Override
     public <T> T[] toArray(@NotNull T[] a) {
         //if (!(Transition.class.isInstance(new Class<T>()))) throw new InvalidParameterException();
-        Iterator<Transition> iterator = iterator();
+        Iterator<Transition<S, E>> iterator = iterator();
         for (int i = 0; i < a.length; i++) {
             //noinspection unchecked
             a[i] = (T) iterator.next();
@@ -143,7 +145,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
     }
 
     @Override
-    public boolean add(Transition transition) {
+    public boolean add(Transition<S, E> transition) {
         throw new UnsupportedOperationException();
     }
 
@@ -160,7 +162,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
     }
 
     @Override
-    public boolean addAll(@NotNull Collection<? extends Transition> c) {
+    public boolean addAll(@NotNull Collection<? extends Transition<S, E>> c) {
         throw new UnsupportedOperationException();
     }
 
@@ -180,33 +182,41 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
     }
 
     @Override
-    public Spliterator<Transition> spliterator() {
-        return new BranchesSpliterator(this);
+    public Spliterator<Transition<S, E>> spliterator() {
+        return new BranchesSpliterator<>(this);
     }
 
-    private static class BranchesSpliterator implements Spliterator<Transition> {
-        private final LinkedList<Pair<PossibleStateTransitionPaths, Iterator<Transition>>> iteratorState;
+    public Stream<State> applyRecursive() {
+        return possibleTransitions.stream().flatMap(t -> {
+            t.getEvent().accept(t.getFrom(), t.getTo());
+            if (furtherPaths == null) return Stream.of(t.getTo());
+            else return furtherPaths.get(t.getTo()).applyRecursive();
+        });
+    }
 
-        public BranchesSpliterator(PossibleStateTransitionPaths transitionz) {
+    private static class BranchesSpliterator<S extends State, E extends Event> implements Spliterator<Transition<S, E>> {
+        private final LinkedList<Pair<PossibleStateTransitionPaths<S, E>, Iterator<Transition<S, E>>>> iteratorState;
+
+        public BranchesSpliterator(PossibleStateTransitionPaths<S, E> transitionz) {
             this.iteratorState = new LinkedList<>();
             iteratorState.add(new Pair<>(transitionz, transitionz.possibleTransitions.iterator()));
         }
 
-        public BranchesSpliterator(Pair<PossibleStateTransitionPaths, Iterator<Transition>> state) {
+        public BranchesSpliterator(Pair<PossibleStateTransitionPaths<S, E>, Iterator<Transition<S, E>>> state) {
             this.iteratorState = new LinkedList<>();
             iteratorState.add(state);
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super Transition> action) {
+        public boolean tryAdvance(Consumer<? super Transition<S, E>> action) {
             synchronized (iteratorState) {
                 if (iteratorState.size() <= 0) return false;
-                final Iterator<Transition> iteratorToUse = iteratorState.peek().getValue();
-                Transition transition = iteratorToUse.next();
+                final Iterator<Transition<S, E>> iteratorToUse = iteratorState.peek().getValue();
+                Transition<S, E> transition = iteratorToUse.next();
 
                 if (!iteratorToUse.hasNext()) {
                     // Exhausted this iteratorState: go on to possible next states
-                    final PossibleStateTransitionPaths rip = iteratorState.pop().getKey();
+                    final PossibleStateTransitionPaths<S, E> rip = iteratorState.pop().getKey();
                     if (rip.furtherPaths != null) rip.furtherPaths.forEach((_state, branches) ->
                             iteratorState.push(new Pair<>(branches, branches.possibleTransitions.iterator()))
                     );
@@ -217,7 +227,7 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super Transition> action) {
+        public void forEachRemaining(Consumer<? super Transition<S, E>> action) {
             //noinspection StatementWithEmptyBody
             while (tryAdvance(action)) {
             }
@@ -225,10 +235,10 @@ public class PossibleStateTransitionPaths implements Collection<Transition> {
 
 
         @Override
-        public Spliterator<Transition> trySplit() { // O(1)
+        public Spliterator<Transition<S, E>> trySplit() { // O(1)
             synchronized (iteratorState) {
                 if (iteratorState.size() > 1)
-                    return new BranchesSpliterator(iteratorState.removeLast());
+                    return new BranchesSpliterator<>(iteratorState.removeLast());
                 else return null;
             }
         }

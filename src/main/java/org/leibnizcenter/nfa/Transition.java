@@ -1,42 +1,47 @@
 package org.leibnizcenter.nfa;
 
-public class Transition {
-    public final Event event;
-    public final State from;
-    public final State to;
+@SuppressWarnings({"WeakerAccess", "unused"})
+public class Transition<StateType extends State, EventType extends Event> {
+    public final EventType event;
+    public final StateType from;
+    public final StateType to;
     public final boolean isFinal;
 
-    public Transition(Event event, State from, State to) {
+    public Transition(EventType event, StateType from, StateType to) {
         this.event = event;
         this.from = from;
         this.to = to;
         this.isFinal = false;
     }
 
-    public Transition(Event event, State from, State to, boolean isFinal) {
+    public Transition(EventType event, StateType from, StateType to, boolean isFinal) {
         this.event = event;
         this.from = from;
         this.to = to;
         this.isFinal = isFinal;
     }
 
-    public Transition(State from, Event event, State to) {
+    public Transition(StateType from, EventType event, StateType to) {
         this.event = event;
         this.from = from;
         this.to = to;
         this.isFinal = false;
     }
 
+    public static <StateType extends State, EventType extends Event>
+    FromHolder<StateType, EventType> from(StateType from) {
+        return new FromHolder<>(from);
+    }
 
-    public Event getEvent() {
+    public EventType getEvent() {
         return event;
     }
 
-    public State getFrom() {
+    public StateType getFrom() {
         return from;
     }
 
-    public State getTo() {
+    public StateType getTo() {
         return to;
     }
 
@@ -46,7 +51,7 @@ public class Transition {
 
     @Override
     public String toString() {
-        return from+"-["+ event +
+        return from + "-[" + event +
                 "]->" + to;
     }
 
@@ -70,34 +75,29 @@ public class Transition {
         return result;
     }
 
-    public static FromHolder from(State from) {
-        return new FromHolder(from);
-    }
+    public static class FromHolder<StateType extends State, EventType extends Event> {
+        private final StateType from;
 
-
-    public static class FromHolder {
-        private final State from;
-
-        public FromHolder(State from) {
+        public FromHolder(StateType from) {
             this.from = from;
         }
 
-        public ThroughHolder through(Event event) {
-            return new ThroughHolder(from, event);
+        public ThroughHolder through(EventType event) {
+            return new ThroughHolder<>(from, event);
         }
     }
 
-    public static class ThroughHolder {
-        private final Event event;
-        private final State from;
+    public static class ThroughHolder<StateType extends State, EventType extends Event> {
+        private final EventType event;
+        private final StateType from;
 
-        public ThroughHolder(State from, Event event) {
+        public ThroughHolder(StateType from, EventType event) {
             this.event = event;
             this.from = from;
         }
 
-        public Transition to(State to) {
-            return new Transition(from, event, to);
+        public Transition to(StateType to) {
+            return new Transition<>(from, event, to);
         }
     }
 }
