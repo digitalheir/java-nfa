@@ -4,7 +4,7 @@ This is a library that provides an implemention [nondeterminstic finite state au
 ## Why?
 There are already a bunch of libraries out there which work with deterministic finite state automata (DFAs), and there is a well-known result in automata theory which says that for any language recognized by an NFA, we can construct a DFA which recognizes the same language.
 
-There are two problems, however:
+So why not just use DFAs? Two reasons:
 * Determinizing an NFA has an exponential blowup in the number of states.
 * An NFA may have side-effects, which may be problematic with the standard way of determinizing NFAs. Indeed, [some non-deterministic finite state transducers have no equivalent deterministic finite state transducer](http://www.let.rug.nl/~vannoord/papers/preds/node22.html). 
 
