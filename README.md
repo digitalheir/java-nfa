@@ -16,7 +16,7 @@ Download [the latest JAR](https://github.com/digitalheir/nfa/releases/latest) or
 
 or Gradle:
 ```groovy
-compile 'org.leibnizcenter:nfa:0.9.6'
+compile 'org.leibnizcenter:nfa:1.0.0'
 ```
 
 ## Why?
