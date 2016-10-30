@@ -1,6 +1,24 @@
 # Nondeterministic finite state automata
 This is a library that provides an implemention [nondeterminstic finite state automata](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton) (NFAs) in Java. You can think of NFAs as flowcharts: you are in a state, take some action, and arrive in a new state. The action can produce a side effect, such as writing a string to a tape. 
 
+## Usage
+Download [the latest JAR](https://github.com/digitalheir/nfa/releases/latest) or grab from Maven:
+
+```xml
+<dependencies>
+        <dependency>
+            <groupId>org.leibnizcenter</groupId>
+            <artifactId>nfa</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+</dependencies>
+```
+
+or Gradle:
+```groovy
+compile 'org.leibnizcenter:nfa:0.9.6'
+```
+
 ## Why?
 There are already a bunch of libraries out there which work with deterministic finite state automata (DFAs), and there is a well-known result in automata theory which says that for any language recognized by an NFA, we can construct a DFA which recognizes the same language.
 
