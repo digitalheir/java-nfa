@@ -1,5 +1,5 @@
 # Nondeterministic finite state automata
-This is a library that provides an implemention [nondeterminstic finite state automata](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton) (NFAs) in Java. You can think of NFAs as flowcharts: you are in a state, take some action, and arrive in a new state. The action can produce a side effect, such as writing a string to a tape. 
+This is a library that provides an implemention of [nondeterminstic finite state automata](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton) (NFAs) in Java. You can think of NFAs as flowcharts: you are in a state, take some action, and arrive in a new state. The action can produce a side effect, such as writing a string to a tape. 
 
 ## Usage
 Download [the latest JAR](https://github.com/digitalheir/nfa/releases/latest) or grab from Maven:
