@@ -1,8 +1,8 @@
+# Nondeterministic finite state automata
 [![Build Status](https://travis-ci.org/digitalheir/java-nfa.svg?branch=master)](https://travis-ci.org/digitalheir/java-nfa)
 [![GitHub version](https://badge.fury.io/gh/digitalheir%2Fjava-nfa.svg)](https://github.com/digitalheir/java-nfa/releases)
 [![License](https://img.shields.io/npm/l/probabilistic-earley-parser.svg)](https://github.com/digitalheir/java-nfa/blob/master/LICENSE.txt)
 
-# Nondeterministic finite state automata
 This is a library that provides an implemention of [nondeterminstic finite state automata](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton) (NFAs) in Java. You can think of NFAs as flowcharts: you are in a state, take some action, and arrive in a new state. The action can produce a side effect, such as writing a string to a tape. 
 
 ## Usage
