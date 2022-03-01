@@ -20,7 +20,7 @@ public class ParkingMeterTest {
     /**
      * How much money is in the machine
      */
-    private int ¢¢¢;
+    private int cents;
 
     @Test
     public void parkingMeterExample() {
@@ -56,7 +56,7 @@ public class ParkingMeterTest {
         Collection<State> endStates2 = nfa.apply(PAYED_0, new LinkedList<>(Arrays.asList(drop50cents, drop25cents, drop50cents, drop25cents)))
                 .collect(Collectors.toList());
 
-        System.out.println("Today earnings: ¢" + ¢¢¢ + ".");
+        System.out.println("Today earnings: ¢" + cents + ".");
 
         assertEquals(endStates1, endStates2);
         assertEquals(endStates0, endStates2);
@@ -65,57 +65,45 @@ public class ParkingMeterTest {
 
     private Collection<State> manualDroppings(CoinDrop drop25cents, CoinDrop drop50cents, NFA<PayState, CoinDrop> nfa) {
         return nfa.getTransitions(PAYED_0, drop25cents).stream()
-                .map(transition -> {//noinspection unchecked
-                    drop25cents.accept(transition.getFrom(), transition.getTo());
-                    return transition;
-                })
+                .peek(transition -> drop25cents.accept(transition.getFrom(), transition.getTo()))
                 .flatMap(trans -> nfa.getTransitions(trans.getTo(), drop50cents).stream())
-                .map(transition -> {//noinspection unchecked
-                    drop50cents.accept(transition.getFrom(), transition.getTo());
-                    return transition;
-                })
+                .peek(transition -> drop50cents.accept(transition.getFrom(), transition.getTo()))
                 .flatMap(trans -> nfa.getTransitions(trans.getTo(), drop50cents).stream())
-                .map(transition -> {//noinspection unchecked
-                    drop50cents.accept(transition.getFrom(), transition.getTo());
-                    return transition;
-                })
+                .peek(transition -> drop50cents.accept(transition.getFrom(), transition.getTo()))
                 .flatMap(trans -> nfa.getTransitions(trans.getTo(), drop25cents).stream())
-                .map(transition -> {//noinspection unchecked
-                    drop25cents.accept(transition.getFrom(), transition.getTo());
-                    return transition;
-                })
+                .peek(transition -> drop25cents.accept(transition.getFrom(), transition.getTo()))
                 .map(Transition::getTo).collect(Collectors.toList());
     }
 
     enum PayState implements State {
         PAYED_0(0), PAYED_25(25), PAYED_50(50), PAYED_75(75);
-        public int ¢;
+        public final int centsValue;
 
-        PayState(int ¢) {
-            this.¢ = ¢;
+        PayState(int centsValue) {
+            this.centsValue = centsValue;
         }
     }
 
     private class CoinDrop implements Event<PayState> {
-        final int ¢;
+        final int centsValue;
 
         CoinDrop(int value) {
-            this.¢ = value;
+            this.centsValue = value;
         }
 
         @Override
         public void accept(PayState from, PayState to) {
-            System.out.println("Bleep Bloop. Added ¢" + ¢ + " to ¢" + from.¢ + ". ");
-            if (to.¢ <= 0 || to.¢ >= 100) System.out.println("You may park. Good day.");
+            System.out.println("Bleep Bloop. Added ¢" + centsValue + " to ¢" + from.centsValue + ". ");
+            if (to.centsValue <= 0 || to.centsValue >= 100) System.out.println("You may park. Good day.");
             else
-                System.out.println("You have paid ¢" + to.¢ + " in total. Please add ¢" + (100 - to.¢) + " before you may park.");
+                System.out.println("You have paid ¢" + to.centsValue + " in total. Please add ¢" + (100 - to.centsValue) + " before you may park.");
             System.out.println("----------------------------------------------");
-            ¢¢¢ += this.¢;
+            cents += this.centsValue;
         }
 
         @Override
         public String toString() {
-            return "¢" + ¢;
+            return "¢" + centsValue;
         }
     }
 }

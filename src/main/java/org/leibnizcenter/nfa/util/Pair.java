@@ -33,10 +33,17 @@ public class Pair<K, V> implements Map.Entry<K, V> {
         return oldV;
     }
 
+    @SuppressWarnings("unused")
+    public K setKey(K key) {
+        K oldKey = k;
+        k = key;
+        return oldKey;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || !(o instanceof Map.Entry)) return false;
+        if (!(o instanceof Map.Entry)) return false;
 
         Map.Entry<?, ?> pair = (Map.Entry<?, ?>) o;
 
@@ -46,8 +53,6 @@ public class Pair<K, V> implements Map.Entry<K, V> {
 
     @Override
     public int hashCode() {
-        int result = v != null ? v.hashCode() : 0;
-        result = 31 * result + (k != null ? k.hashCode() : 0);
-        return result;
+        return 31 * (v != null ? v.hashCode() : 0) + (k != null ? k.hashCode() : 0);
     }
 }

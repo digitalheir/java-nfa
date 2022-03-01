@@ -1,7 +1,7 @@
 package org.leibnizcenter.nfa;
 
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.leibnizcenter.nfa.util.Pair;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -14,7 +14,7 @@ import java.util.stream.StreamSupport;
  * Created by maarten on 17-6-16.
  */
 @SuppressWarnings("WeakerAccess")
-public class PossibleStateTransitionPaths<S extends State, E extends Event> implements Collection<Transition<S, E>> {
+public class PossibleStateTransitionPaths<S extends State, E extends Event<S>> implements Collection<Transition<S, E>> {
     public final List<E> path;
     public final Collection<Transition<S, E>> possibleTransitions;
     public final Map<S, PossibleStateTransitionPaths<S, E>> furtherPaths;
@@ -68,10 +68,10 @@ public class PossibleStateTransitionPaths<S extends State, E extends Event> impl
         } else if (furtherPaths != null) throw new NullPointerException();
 
         if (furtherPaths != null) {
-            possibleTransitions.stream().forEach(transition -> {
+            possibleTransitions.forEach(transition -> {
                 final PossibleStateTransitionPaths<S, E> possibleFurtherBranches = furtherPaths.get(transition.getTo());
                         if (possibleFurtherBranches.path.size() != path.size() - 1) throw new Error();
-                        possibleFurtherBranches.possibleTransitions.stream().forEach(t -> {
+                        possibleFurtherBranches.possibleTransitions.forEach(t -> {
                                     if (!t.getFrom().equals(transition.getTo())) throw new Error();
                                 }
                         );
@@ -98,6 +98,7 @@ public class PossibleStateTransitionPaths<S extends State, E extends Event> impl
      * @param o Possible input path. Must be instance of {@see Iterable}.
      * @return Whether the given branch is contained in this one
      */
+    @SuppressWarnings("rawtypes")
     @Override
     public boolean contains(Object o) {
         if (o instanceof Iterable) {
@@ -122,18 +123,19 @@ public class PossibleStateTransitionPaths<S extends State, E extends Event> impl
                 .iterator();
     }
 
-    @NotNull
+//    @NotNull
+    @SuppressWarnings("unchecked")
     @Override
-    public Transition[] toArray() {
-        Transition[] arr = new Transition[numberOfTransitions];
+    public Transition<S, E>[] toArray() {
+        Transition<S, E>[] arr = new Transition[numberOfTransitions];
         Iterator<Transition<S, E>> iterator = iterator();
         for (int i = 0; i < numberOfTransitions; i++) arr[i] = iterator.next();
         return arr;
     }
 
-    @NotNull
+//    @NotNull
     @Override
-    public <T> T[] toArray(@NotNull T[] a) {
+    public <T> T[] toArray(T[] a) {
         //if (!(Transition.class.isInstance(new Class<T>()))) throw new InvalidParameterException();
         Iterator<Transition<S, E>> iterator = iterator();
         for (int i = 0; i < a.length; i++) {
@@ -194,7 +196,7 @@ public class PossibleStateTransitionPaths<S extends State, E extends Event> impl
         });
     }
 
-    private static class BranchesSpliterator<S extends State, E extends Event> implements Spliterator<Transition<S, E>> {
+    private static class BranchesSpliterator<S extends State, E extends Event<S>> implements Spliterator<Transition<S, E>> {
         private final LinkedList<Pair<PossibleStateTransitionPaths<S, E>, Iterator<Transition<S, E>>>> iteratorState;
 
         public BranchesSpliterator(PossibleStateTransitionPaths<S, E> transitionz) {

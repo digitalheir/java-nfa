@@ -1,7 +1,7 @@
 package org.leibnizcenter.nfa;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class Transition<StateType extends State, EventType extends Event> {
+public class Transition<StateType extends State, EventType extends Event<StateType>> {
     public final EventType event;
     public final StateType from;
     public final StateType to;
@@ -28,7 +28,7 @@ public class Transition<StateType extends State, EventType extends Event> {
         this.isFinal = false;
     }
 
-    public static <StateType extends State, EventType extends Event>
+    public static <StateType extends State, EventType extends Event<StateType>>
     FromHolder<StateType, EventType> from(StateType from) {
         return new FromHolder<>(from);
     }
@@ -55,6 +55,8 @@ public class Transition<StateType extends State, EventType extends Event> {
                 "]->" + to;
     }
 
+
+    @SuppressWarnings("rawtypes")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -75,19 +77,19 @@ public class Transition<StateType extends State, EventType extends Event> {
         return result;
     }
 
-    public static class FromHolder<StateType extends State, EventType extends Event> {
+    public static class FromHolder<StateType extends State, EventType extends Event<StateType>> {
         private final StateType from;
 
         public FromHolder(StateType from) {
             this.from = from;
         }
 
-        public ThroughHolder through(EventType event) {
+        public ThroughHolder<StateType, EventType> through(EventType event) {
             return new ThroughHolder<>(from, event);
         }
     }
 
-    public static class ThroughHolder<StateType extends State, EventType extends Event> {
+    public static class ThroughHolder<StateType extends State, EventType extends Event<StateType>> {
         private final EventType event;
         private final StateType from;
 
@@ -96,7 +98,7 @@ public class Transition<StateType extends State, EventType extends Event> {
             this.from = from;
         }
 
-        public Transition to(StateType to) {
+        public Transition<StateType, EventType> to(StateType to) {
             return new Transition<>(from, event, to);
         }
     }

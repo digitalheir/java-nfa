@@ -13,7 +13,7 @@ import java.util.stream.Stream;
  * Created by maarten on 15-6-16.
  */
 @SuppressWarnings("WeakerAccess")
-public class NFA<S extends State, E extends Event> {
+public class NFA<S extends State, E extends Event<S>> {
     public final Map<S, Multimap<E, Transition<S, E>>> transitions;
     public final Set<S> states;
     public final Multimap<E, S> statesThatAllowEvent;
@@ -136,7 +136,7 @@ public class NFA<S extends State, E extends Event> {
         return statesThatAllowEvent.get(e);
     }
 
-    public static class Builder<S extends State, E extends Event> {
+    public static class Builder<S extends State, E extends Event<S>> {
         private final Set<S> states;
         private final Map<S, Map<E, Set<Transition<S, E>>>> transitions;
 
@@ -151,6 +151,7 @@ public class NFA<S extends State, E extends Event> {
             return this;
         }
 
+        @SuppressWarnings("UnusedReturnValue")
         public Builder<S, E> addState(S states) {
             this.states.add(states);
             return this;
@@ -179,7 +180,8 @@ public class NFA<S extends State, E extends Event> {
          * @param transitionsToAdd List of transitions. Implicit states will be added if necessary.
          * @return This builder
          */
-        public Builder<S, E> addTransitions(Collection<Transition> transitionsToAdd) {
+        @SuppressWarnings("UnusedReturnValue")
+        public Builder<S, E> addTransitions(Collection<Transition<S, E>> transitionsToAdd) {
             transitionsToAdd.forEach(this::addTransition);
             return this;
         }
@@ -190,6 +192,7 @@ public class NFA<S extends State, E extends Event> {
          * @param transition Implicit states will be added if necessary.
          * @return This builder
          */
+        @SuppressWarnings("UnusedReturnValue")
         public Builder<S, E> addTransition(Transition<S, E> transition) {
             S from = transition.from;
             S to = transition.to;
@@ -223,10 +226,11 @@ public class NFA<S extends State, E extends Event> {
 
         public StateContainer andThen(E e) {
             states = states.stream()
-                    .flatMap(from -> getTransitions(from, e).stream().map(transition -> {//noinspection unchecked
-                        e.accept(transition.getFrom(), transition.getTo());
-                        return transition;
-                    })).map(Transition::getTo).collect(Collectors.toList());
+                    .flatMap(from -> getTransitions(from, e).stream()
+                            .peek(transition -> e.accept(transition.getFrom(), transition.getTo()))
+                    )
+                    .map(Transition::getTo)
+                    .collect(Collectors.toList());
             return this;
         }
 

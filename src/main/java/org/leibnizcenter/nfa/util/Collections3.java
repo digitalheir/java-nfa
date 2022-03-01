@@ -48,6 +48,7 @@ public class Collections3 {
     /**
      * @return Given list, or immutable empty list if null
      */
+    @SuppressWarnings("unchecked")
     public static <T> List<T> orEmpty(List<T> list) {
         return (list == null) ? Collections.EMPTY_LIST : list;
     }
@@ -55,6 +56,7 @@ public class Collections3 {
     /**
      * @return Given list, or immutable empty list if null
      */
+    @SuppressWarnings("unchecked")
     public static <R> Set<R> orEmpty(Set<R> set) {
         return set == null ? Collections.EMPTY_SET : set;
     }

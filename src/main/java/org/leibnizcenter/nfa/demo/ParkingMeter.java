@@ -15,7 +15,7 @@ public class ParkingMeter {
     /**
      * How much money is in the machine
      */
-    private int ¢¢¢;
+    private int cents;
 
     public static void main(String... args) {
         // Run example
@@ -31,60 +31,63 @@ public class ParkingMeter {
 
         // Define our NFA
         NFA<PayState, CoinDrop> nfa = new NFA.Builder<PayState, CoinDrop>()
-                .addTransition(PAYED_0, drop25cents, PAYED_25)
-                .addTransition(PAYED_0, drop50cents, PAYED_50)
-                .addTransition(PAYED_25, drop25cents, PAYED_50)
-                .addTransition(PAYED_25, drop50cents, PAYED_75)
-                .addTransition(PAYED_50, drop25cents, PAYED_75)
-                .addTransition(PAYED_50, drop50cents, PAYED_0)
-                .addTransition(PAYED_75, drop25cents, PAYED_0)
-                .addTransition(PAYED_75, drop50cents, PAYED_0) // Payed too much... no money back!
+                .addTransition(PAID_0, drop25cents, PAID_25)
+                .addTransition(PAID_0, drop50cents, PAID_50)
+                .addTransition(PAID_25, drop25cents, PAID_50)
+                .addTransition(PAID_25, drop50cents, PAID_75)
+                .addTransition(PAID_50, drop25cents, PAID_75)
+                .addTransition(PAID_50, drop50cents, PAID_0)
+                .addTransition(PAID_75, drop25cents, PAID_0)
+                .addTransition(PAID_75, drop50cents, PAID_0) // Paid too much... no money back!
                 .build();
 
         // Apply action step-by-step
-        Collection<State> endStates1 = nfa.start(PAYED_0)
+        Collection<State> endStates1 = nfa.start(PAID_0)
                 .andThen(drop25cents)
                 .andThen(drop50cents)
                 .andThen(drop50cents)
                 .andThen(drop25cents)
-                .getState().collect(Collectors.toList());
-
-        // Or apply actions in bulk (this makes calculations of the possible paths more efficient, but it doesn't matter if we iterate over all transitions anyway)
-        Collection<State> endStates2 = nfa.apply(PAYED_0, new LinkedList<>(Arrays.asList(drop50cents, drop25cents, drop50cents, drop25cents)))
+                .getState()
                 .collect(Collectors.toList());
 
-        System.out.println("Today earnings: ¢" + ¢¢¢ + ".");
+        // Or apply actions in bulk (this makes calculations of the possible paths more efficient, but it doesn't matter if we iterate over all transitions anyway)
+        Collection<State> endStates2 = nfa.apply(PAID_0, new LinkedList<>(Arrays.asList(drop50cents, drop25cents, drop50cents, drop25cents)))
+                .collect(Collectors.toList());
+
+        System.out.println("Today earnings: ¢" + cents + ".");
     }
 
     enum PayState implements State {
-        PAYED_0(0), PAYED_25(25), PAYED_50(50), PAYED_75(75);
-        public int ¢;
+        PAID_0(0), PAID_25(25), PAID_50(50), PAID_75(75);
+        public final int centsValue;
 
-        PayState(int ¢) {
-            this.¢ = ¢;
+        PayState(int centsValue) {
+            this.centsValue = centsValue;
         }
     }
 
     private class CoinDrop implements Event<PayState> {
-        final int ¢;
+        final int centsValue;
 
         CoinDrop(int value) {
-            this.¢ = value;
+            this.centsValue = value;
         }
 
         @Override
         public void accept(PayState from, PayState to) {
-            System.out.println("Bleep Bloop. Added ¢" + ¢ + " to ¢" + from.¢ + ". ");
-            if (to.¢ <= 0 || to.¢ >= 100) System.out.println("You may park. Good day.");
-            else
-                System.out.println("You have paid ¢" + to.¢ + " in total. Please add ¢" + (100 - to.¢) + " before you may park.");
+            System.out.println("Bleep Bloop. Added ¢" + centsValue + " to ¢" + from.centsValue + ". ");
+            if (to.centsValue <= 0 || to.centsValue >= 100) {
+                System.out.println("You may park. Good day.");
+            } else {
+                System.out.println("You have paid ¢" + to.centsValue + " in total. Please add ¢" + (100 - to.centsValue) + " before you may park.");
+            }
             System.out.println("----------------------------------------------");
-            ¢¢¢ += this.¢;
+            cents += this.centsValue;
         }
 
         @Override
         public String toString() {
-            return "¢" + ¢;
+            return "¢" + centsValue;
         }
     }
 }

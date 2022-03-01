@@ -26,7 +26,7 @@ public class NFATest {
     public static final Transition<TStates, TEvents> TRANSITION_S0_A_S1 = new Transition<>(S0, eventA, S1);
 
     @Test
-    public void getPathsForInput() throws Exception {
+    public void getPathsForInput() {
         NFA.Builder<TStates, TEvents> b = new NFA.Builder<>();
 
         b.addTransition(S0, eventA, S0);
@@ -49,14 +49,15 @@ public class NFATest {
                 eventA,
                 eventA
         )));
-        List<Event> events1 = ImmutableList.copyOf(events);
+        List<Event<TStates>> events1 = ImmutableList.copyOf(events);
         Map<TStates, Map<List<TEvents>, PossibleStateTransitionPaths<TStates, TEvents>>> possiblePaths = nfa.precomputePaths(events);
-//        for (Map.Entry<List<Event>, PossibleBranches> entry : possiblePaths.get(S0).entrySet()) {
-//            System.out.println(entry.getKey());
-//            System.out.println(events1);
-//            System.out.println(events1.equals(entry.getKey()));
-//            System.out.println(entry.getKey().equals(events1));
-//        }
+
+        //        for (Map.Entry<List<Event>, PossibleBranches> entry : possiblePaths.get(S0).entrySet()) {
+        //            System.out.println(entry.getKey());
+        //            System.out.println(events1);
+        //            System.out.println(events1.equals(entry.getKey()));
+        //            System.out.println(entry.getKey().equals(events1));
+        //        }
 
         final PossibleStateTransitionPaths<TStates, TEvents> transitions = possiblePaths.get(S0).get(events1);
         assertEquals(transitions.numberOfBranches(), 14);
@@ -67,7 +68,7 @@ public class NFATest {
         transitions.parallelStream().forEach(ignored -> i[0]++);
         assertEquals(i[0], transitionNumber);
         i[0] = 0;
-        transitions.stream().forEach(ignored -> i[0]++);
+        transitions.forEach(ignored -> i[0]++);
         assertEquals(i[0], transitionNumber);
         i[0] = 0;
         for (Transition<TStates, TEvents> ignored : transitions) i[0]++;
@@ -75,7 +76,7 @@ public class NFATest {
     }
 
     @Test
-    public void getTransitions() throws Exception {
+    public void getTransitions() {
         NFA.Builder<TStates, TEvents> b = new NFA.Builder<>();
 
         b.addTransition(TRANSITION_S0_A_S0);
